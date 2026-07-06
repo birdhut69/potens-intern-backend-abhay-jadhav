@@ -16,12 +16,9 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-// Placeholder for POST /log that applies auth + rate limit for Stage 4.
-// Implementation of the actual append logic will be in Stage 5.
-app.post('/log', createWriteLimiter(), apiKeyAuth, (req, res) => {
-  req.log.info({ route: '/log' }, 'received log request (placeholder)');
-  res.status(501).json({ error: 'Not implemented yet' });
-});
+// Mount logs router which contains POST /, GET /:id, GET / (verify/export)
+const logsRouter = require('./routes/logs');
+app.use('/logs', logsRouter);
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
