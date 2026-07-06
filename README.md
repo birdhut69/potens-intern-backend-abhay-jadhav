@@ -4,6 +4,10 @@
 
 This repository implements a small, auditable append-only log service used for the Potens internship take-home.
 
+150‑word approach summary
+
+I built a deterministic, tamper‑evident append‑only log with PostgreSQL and a Node.js API. Each entry includes an application-set ISO timestamp and a canonicalized JSON payload; entries are chained by SHA‑256 where each chain hash covers {timestamp, actor, action, payload, prev_hash}. To ensure linearity under concurrency the append operation runs inside a transaction that acquires a strict `LOCK TABLE logs IN EXCLUSIVE MODE` before reading the prior chain hash and inserting the new row. This design trades a global append serialization point for simple, auditable determinism — acceptable for the take‑home and easy to reason about in interviews. Verification recomputes hashes in order and reports the first mismatch. For scale, the repository includes notes and a benchmark; next steps would replace blocking table locks with a single-writer append service or queue, and add Merkle batching for efficient third‑party anchoring and O(log N) proofs.
+
 What is here now (Stage 1 & 2):
 - Project scaffold (Node + Express)
 - Docker Compose to bring up Postgres + app
