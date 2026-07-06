@@ -8,7 +8,9 @@
     "dev": "nodemon src/index.js",
     "test": "jest",
     "lint": "eslint . --ext .js",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "migrate": "knex migrate:latest --knexfile ./knexfile.js",
+    "migrate:rollback": "knex migrate:rollback --knexfile ./knexfile.js"
   },
   "engines": {
     "node": ">=18"
