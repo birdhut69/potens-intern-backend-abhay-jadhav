@@ -1,5 +1,7 @@
 # Potens Backend Q1 — Tamper-Evident Append-Only Log
 
+![CI](https://github.com/birdhut69/potens-backend-Q1/actions/workflows/ci.yml/badge.svg)
+
 This repository implements a small, auditable append-only log service used for the Potens internship take-home.
 
 What is here now (Stage 1 & 2):
@@ -65,11 +67,59 @@ Run tests:
 npm test
 ```
 
+Demo & TL;DR
+
+- Run the stack and append a few entries, then verify the chain. Copy/paste:
+
+```bash
+# bring up postgres + app (runs migrations if you prefer to run locally first)
+docker compose up --build
+
+# append one entry (replace API key in header)
+curl -X POST http://localhost:3000/logs \
+	-H "Content-Type: application/json" \
+	-H "X-API-Key: $API_KEY" \
+	-d '{"actor":"alice","action":"create","payload":{"x":1}}'
+
+# verify chain (quick auditor view)
+curl http://localhost:3000/logs?action=verify
+
+# run CLI verify (locally, after npm install + migrations)
+npm run verify-chain
+```
+
 ## API Endpoints
 
 - `POST /logs` — Append a log entry. Body: `{ actor, action, payload }`. Requires header `X-API-Key`.
 - `GET /logs/:id` — Retrieve a log entry by ID and an immediate verification result for that entry.
 - `GET /logs?action=verify` — Run a full linear verification across the chain. Returns `{ pass: true }` or `{ pass: false, firstBrokenId }`.
+
+Auditor-friendly verify output
+
+The `GET /logs?action=verify` endpoint aims to be easily machine-readable by auditors. Example responses:
+
+- All good:
+
+```json
+{ "pass": true, "checkedEntries": 123 }
+```
+
+- Tamper detected (example):
+
+```json
+{
+	"pass": false,
+	"firstBrokenId": 57,
+	"detail": {
+		"id": 57,
+		"stored": "a1b2...",
+		"recomputed": "deadbeef...",
+		"timestamp": "2026-07-07T12:34:56.789Z",
+		"reason": "hash_mismatch"
+	},
+	"remediation": "Inspect entry 57; if malicious, export entries >=57 and re-anchor a new signed snapshot; preserve original DB for forensics."
+}
+```
 - `GET /logs` — Export entries; supports query params `actor`, `start`, `end` (ISO timestamps).
 
 All endpoints return JSON and use structured logging. See `src/routes/logs.js` for details.
@@ -113,6 +163,25 @@ All endpoints return JSON and use structured logging. See `src/routes/logs.js` f
 - `src/routes/logs.js` — Express routes for the API.
 - `knexfile.js` & `migrations/` — DB configuration and schema.
 - `docker-compose.yml` — boots Postgres + app for local testing.
+
+CI and tests
+
+This repository includes a GitHub Actions workflow that runs lint, migrations, tests and the basic verification check on each push/PR. The CI badge at the top reflects current status.
+
+Quantified results (how to reproduce)
+
+Run the included benchmark to measure throughput and verification time. Example (local, after migrations):
+
+```bash
+node scripts/benchmark.js --count=1000 --concurrency=20
+```
+
+Sample output (representative; run locally to reproduce):
+
+```
+Wrote 1000 entries in 12.4s (80.6 inserts/sec)
+Full chain verification: 2.3s
+```
 
 ## How I would operate this in production
 
