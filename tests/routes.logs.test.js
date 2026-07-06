@@ -7,6 +7,7 @@ describe('logs routes', () => {
   });
 
   test('POST /logs missing fields returns 400', async () => {
+    process.env.API_KEY = 'testkey';
     // Mock appendLog so route can be mounted without DB
     jest.doMock('../src/services/logService', () => ({ appendLog: jest.fn() }));
     const logsRouter = require('../src/routes/logs');
@@ -14,7 +15,7 @@ describe('logs routes', () => {
     app.use(express.json());
     app.use('/logs', logsRouter);
 
-    const res = await request(app).post('/logs').send({ actor: 'a' });
+    const res = await request(app).post('/logs').set('X-API-Key', 'testkey').send({ actor: 'a' });
     expect(res.status).toBe(400);
   });
 
