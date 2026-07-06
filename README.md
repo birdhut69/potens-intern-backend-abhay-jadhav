@@ -187,6 +187,13 @@ Wrote 1000 entries in 12.4s (80.6 inserts/sec)
 Full chain verification: 2.3s
 ```
 
+Local sample (this run):
+
+```
+Wrote 100 entries in 0.18s (565.4 inserts/sec)
+Full chain verification: 0.002s
+```
+
 ## How I would operate this in production
 
 1. Replace the simple API key with mTLS or OAuth + RBAC.
